@@ -7,11 +7,13 @@
 
 # Connection Schema
 
+```
 1        ----request service---> 
 2        <---challenge---------- 
 3 Client ----solved challenge--> Server
 4        <---qoute--------------
 5        <---close connection---
+```
 
 ## Schema description
 1. Client creates a connection to the server.
@@ -39,7 +41,12 @@
 
 # Client library using
 
-Client library can be used only in Go lang project. To create PoW connection use `client.GetPoWClient().Dial("tcp", "%SERVER_HOST%:%SERVER_PORT%")`, connection will be ready to use after. It's a standart `net.Conn`.
+Client library can be used only in Go lang project. To create PoW connection use 
+```
+// Dial(network, address string) (net.Conn, error)
+client.GetPoWClient().Dial("tcp", "%SERVER_HOST%:%SERVER_PORT%")
+```
+Connection will be ready to use after this.
 
 # PoW Server overview
 

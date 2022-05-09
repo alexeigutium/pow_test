@@ -3,6 +3,7 @@ package client
 import (
 	"crypto/sha1"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"net"
 
@@ -14,10 +15,15 @@ type TCPDialer interface {
 	Dial(network, address string) (net.Conn, error)
 }
 
-type powClient struct{}
+type powClient struct {
+	maxCounter uint64
+}
 
 func GetPoWClient() TCPDialer {
-	return &powClient{}
+	// let it be 2^^20 for now
+	return &powClient{
+		maxCounter: uint64(2 << 20),
+	}
 }
 
 // Dial dials the pow server, finds solution for challenge and returns approved connection to work
@@ -27,10 +33,10 @@ func (c powClient) Dial(network, address string) (net.Conn, error) {
 		return nil, fmt.Errorf("can't connect to server: %w", err)
 	}
 
-	return resolveChallenge(conn)
+	return c.resolveChallenge(conn)
 }
 
-func resolveChallenge(conn net.Conn) (net.Conn, error) {
+func (c powClient) resolveChallenge(conn net.Conn) (net.Conn, error) {
 	// first byte is challenge length
 	total := make([]byte, 1)
 	if _, err := conn.Read(total); err != nil {
@@ -42,9 +48,9 @@ func resolveChallenge(conn net.Conn) (net.Conn, error) {
 		return nil, fmt.Errorf("can't read challenge from server: %w", err)
 	}
 
-	solution, err := findPoWSolution(challenge)
+	solution, err := findPoWSolution(challenge, c.maxCounter)
 	if err != nil {
-		return nil, fmt.Errorf("it's not possible but we did it: %w", err)
+		return nil, fmt.Errorf("can't find solution: %w", err)
 	}
 	if _, err := conn.Write(solution); err != nil {
 		return nil, err
@@ -54,15 +60,13 @@ func resolveChallenge(conn net.Conn) (net.Conn, error) {
 	return conn, nil
 }
 
-func findPoWSolution(challenge []byte) ([]byte, error) {
+func findPoWSolution(challenge []byte, maxCounter uint64) ([]byte, error) {
 	// last byte is a difficulty.
 	difficulty := int(challenge[len(challenge)-1])
 	challenge = challenge[:len(challenge)-1]
-	counter := uint64(0)
 	counterBytes := make([]byte, 8)
 
-	// TODO fix potential problem with infinite loop here. Can it be infinitive? Difficulty is limited, it's a byte
-	for {
+	for counter := uint64(0); counter < maxCounter; counter++ {
 		hasher := sha1.New()
 		binary.LittleEndian.PutUint64(counterBytes[0:8], counter)
 		hasher.Write(append(challenge, counterBytes...))
@@ -72,6 +76,7 @@ func findPoWSolution(challenge []byte) ([]byte, error) {
 			hashed = append([]byte{byte(len(hashed) + 8)}, hashed...)
 			return append(hashed, counterBytes...), nil
 		}
-		counter++
 	}
+
+	return nil, errors.New("too many solutions were checked")
 }

@@ -1,6 +1,7 @@
 # Overview
 
- This is a simple implementation for PoW algorithm, can be used for some study purposes, but not for production code. A lot of required things for production code are missed. Project contains:
+ This is a simple implementation for PoW algorithm, can be used for some study purposes, but not for production code. A lot of required things for production code are missed. 
+ Project contains:
 * PoW server, it returns one random quote if client resolves challenge.
 * PoW Client library
 * Sample client using pow client library
@@ -23,7 +24,8 @@
 5. Server closes the connection.
 
 # Protocol description
-1. Challenge packet consist three parts - total packet length (one byte, this byte isn't used in calculation), challenge (some random string) and difficulty (one byte, how many leading zeros is accepted by server)
+## Challenge packet
+Challenge packet consist three parts - total packet length (one byte, this byte isn't used in calculation), challenge (some random string) and difficulty (one byte, how many leading zeros is accepted by server)
 
 | Name | Length | Sample |
 | ---  |:------:|-------:|
@@ -31,7 +33,8 @@
 | Challenge | various | `[]byte("hello, world!")` |
 | Difficulty | 1 | `20` |
 
-2. Solution packet has three logical blocks: packet length, solution, suffix. Solution equals to `sha(challenge+prefix)` start with at least `difficulty` zeros in binary interpretation
+## Solution packet
+Solution packet has three logical blocks: packet length, solution, suffix. Solution equals to `sha(challenge+prefix)` start with at least `difficulty` zeros in binary interpretation
 
 | Name | Length | Sample |
 | ---  |:------:|-------:|
@@ -46,7 +49,7 @@ Client library can be used only in Go lang project. To create PoW connection use
 // Dial(network, address string) (net.Conn, error)
 client.GetPoWClient().Dial("tcp", "%SERVER_HOST%:%SERVER_PORT%")
 ```
-Connection will be ready to use after this.
+Connection will be ready to use after this. When connection is returned, all verification has already finished.
 
 # PoW Server overview
 

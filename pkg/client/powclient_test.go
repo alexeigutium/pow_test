@@ -37,13 +37,30 @@ func Test_ResolveChallenge_Success(t *testing.T) {
 	}()
 	var err error
 
-	client, err = resolveChallenge(client)
+	client, err = powClient{maxCounter: 10}.resolveChallenge(client)
 
 	assert.NoError(t, err)
 	buf := make([]byte, len(testQuote))
 	_, err = client.Read(buf)
 	assert.NoError(t, err)
 	assert.Equal(t, testQuote, string(buf))
+}
+
+func Test_ResolveChallenge_NoSolution(t *testing.T) {
+	server, client := net.Pipe()
+	go func() {
+		serverResponse := []byte{byte(len(testChallenge) + 1)}
+		serverResponse = append(serverResponse, []byte(testChallenge)...)
+		serverResponse = append(serverResponse, 30)
+
+		_, err := server.Write(serverResponse)
+		require.NoError(t, err)
+	}()
+	var err error
+
+	_, err = powClient{maxCounter: 10}.resolveChallenge(client)
+
+	assert.EqualError(t, err, "can't find solution: too many solution were checked")
 }
 
 func Test_ResolveChallenge_ReadTotalError(t *testing.T) {
@@ -53,7 +70,7 @@ func Test_ResolveChallenge_ReadTotalError(t *testing.T) {
 	}()
 	var err error
 
-	client, err = resolveChallenge(client)
+	client, err = powClient{maxCounter: 10}.resolveChallenge(client)
 
 	assert.EqualError(t, err, "can't read total challenge length from server: EOF")
 	assert.Nil(t, client)
@@ -67,7 +84,7 @@ func Test_ResolveChallenge_ReadChallengeError(t *testing.T) {
 	}()
 	var err error
 
-	client, err = resolveChallenge(client)
+	client, err = powClient{maxCounter: 10}.resolveChallenge(client)
 
 	assert.EqualError(t, err, "can't read challenge from server: EOF")
 	assert.Nil(t, client)
@@ -87,7 +104,7 @@ func Test_ResolveChallenge_WriteError(t *testing.T) {
 	}()
 	var err error
 
-	client, err = resolveChallenge(client)
+	client, err = powClient{maxCounter: 10}.resolveChallenge(client)
 
 	assert.EqualError(t, err, "io: read/write on closed pipe")
 	assert.Nil(t, client)
@@ -97,4 +114,12 @@ func Test_Dial_ServerIsOff(t *testing.T) {
 	conn, err := GetPoWClient().Dial("tcp", "127.0.0.1:7722")
 	assert.EqualError(t, err, "can't connect to server: dial tcp 127.0.0.1:7722: connect: connection refused")
 	assert.Nil(t, conn)
+}
+
+func Test_GetPoWClient(t *testing.T) {
+	expected := &powClient{maxCounter: uint64(2 << 20)}
+
+	actual := GetPoWClient()
+
+	assert.Equal(t, expected, actual)
 }

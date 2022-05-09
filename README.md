@@ -91,3 +91,28 @@ make test
 ```
 Run unit tests
 
+# How it works
+
+## Server
+```
+...
+Use 'docker scan' to run Snyk tests against images to find vulnerabilities and learn how to fix them
+Recreating pow_test_server_1 ... done
+Attaching to pow_test_server_1
+server_1  | server is started
+server_1  | got a client!
+server_1  | challenge sent!
+server_1  | all is ok, access is granted!
+server_1  | access is granted! sending a quote
+```
+
+## Client
+
+```
+Use 'docker scan' to run Snyk tests against images to find vulnerabilities and learn how to fix them
+pow_test_server_1 is up-to-date
+Recreating pow_test_client_1 ... done
+Attaching to pow_test_client_1
+client_1  | We got something from the server: If you are not willing to risk the usual you will have to settle for the ordinary. ~Jim Rohn
+pow_test_client_1 exited with code 0
+```

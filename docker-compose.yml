@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  server:
+    build:
+      dockerfile: server.DockerFile
+      context: .
+    command: /bin/pow_server
+    ports:
+      - '5599:5599'
+    environment:
+      - POW_QUOTES_FILE=/data/quotes.txt
+
+  client:
+    build:
+      dockerfile: client.DockerFile
+      context: .
+    command: /bin/pow_client
+    stdin_open: true
+    tty: true
+    depends_on:
+      - server
+    links:
+      - server

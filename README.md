@@ -91,7 +91,7 @@ make test
 ```
 Run unit tests
 
-# How it works
+# How it looks now
 
 ## Server
 ```
